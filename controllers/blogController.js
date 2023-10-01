@@ -1,7 +1,6 @@
 const axios = require("axios");
 const _ = require("lodash");
 const catchAsync = require("./../utils/catchAsync");
-const AppError = require("./../utils/appError");
 
 const loadData = catchAsync(async (req, res, next) => {
   const { data } = await axios.get(
@@ -17,7 +16,8 @@ const loadData = catchAsync(async (req, res, next) => {
 });
 
 exports.blogStats = catchAsync(async (req, res, next) => {
-  blogs = await loadData();
+  const memoizedBlogs = _.memoize(loadData);
+  blogs = await memoizedBlogs();
   const sizeBlogs = _.size(blogs);
   const maxString = _.maxBy(blogs, "title.length");
 
@@ -32,12 +32,12 @@ exports.blogStats = catchAsync(async (req, res, next) => {
     "The title of the longest blog": maxString.title,
     "Number of blogs with privacy in the title": numberOfBlogsWithPrivacy,
     uniqueBlogTitles,
-    blogs,
   });
 });
 
 exports.blogSearch = catchAsync(async (req, res) => {
-  blogs = loadData();
+  const memoizedBlogs = _.memoize(loadData);
+  blogs = await memoizedBlogs();
   let blogsWithQuery;
 
   if (req.query.query) {
