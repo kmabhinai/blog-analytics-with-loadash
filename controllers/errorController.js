@@ -1,26 +1,9 @@
 const AppError = require("./../utils/appError");
 
-const handleCastErrorDB = (err) => {
-  const message = `Invalid ${err.path}: ${err.value}`;
+const handleWrongUrl = (err) => {
+  const message = `Fix the fetching url!!`;
   return new AppError(message, 400);
 };
-
-const handleDuplicateFieldsDB = (err) => {
-  const message = `Duplicate felid value : ${err.keyValue.name}. Please give unique name`;
-  return new AppError(message, 400);
-};
-
-const handleValidationError = (err) => {
-  const errors = Object.values(err.errors).map((el) => el.message);
-  const message = `Invalid Input data ${errors.join(". ")}`;
-  return new AppError(message, 400);
-};
-
-const handleJWTError = () =>
-  new AppError("Invalid token. Please log in again!", 401);
-
-const handleJWTExpiredError = () =>
-  new AppError("Your Token is Expired. Please log in again.", 401);
 
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
@@ -52,26 +35,17 @@ module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "Error";
 
+  let error = { ...err };
   if (process.env.NODE_ENV === "development") {
-    sendErrorDev(err, res);
+    if (err.message === "Request failed with status code 404") {
+      error = handleWrongUrl(error);
+    }
+    sendErrorDev(error, res);
   } else if (process.env.NODE_ENV == "production") {
-    let error = { ...err };
+    if (err.message === "Request failed with status code 404") {
+      error = handleWrongUrl(error);
+    }
 
-    if (err.name === "CastError") {
-      error = handleCastErrorDB(error);
-    }
-    if (err.code === 11000) {
-      error = handleDuplicateFieldsDB(error);
-    }
-    if (err.name === "ValidationError") {
-      error = handleValidationError(error);
-    }
-    if (err.name === "JsonWebTokenError") {
-      error = handleJWTError();
-    }
-    if (err.name === "TokenExpiredError") {
-      error = handleJWTExpiredError();
-    }
     sendErrorProd(error, res);
   }
 };
