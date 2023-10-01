@@ -3,7 +3,7 @@ const _ = require("lodash");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
 
-exports.blogStats = catchAsync(async (req, res, next) => {
+const loadData = catchAsync(async (req, res, next) => {
   const { data } = await axios.get(
     `https://intent-kit-16.hasura.app/api/rest/blogs`,
     {
@@ -13,8 +13,11 @@ exports.blogStats = catchAsync(async (req, res, next) => {
       },
     }
   );
+  return data.blogs;
+});
 
-  const blogs = data.blogs;
+exports.blogStats = catchAsync(async (req, res, next) => {
+  blogs = await loadData();
   const sizeBlogs = _.size(blogs);
   const maxString = _.maxBy(blogs, "title.length");
 
@@ -30,5 +33,23 @@ exports.blogStats = catchAsync(async (req, res, next) => {
     "Number of blogs with privacy in the title": numberOfBlogsWithPrivacy,
     uniqueBlogTitles,
     blogs,
+  });
+});
+
+exports.blogSearch = catchAsync(async (req, res) => {
+  blogs = loadData();
+  let blogsWithQuery;
+
+  if (req.query.query) {
+    blogsWithQuery = _.filter(blogs, (blog) =>
+      _.includes(blog.title.toLowerCase(), req.query.query.toLowerCase())
+    );
+  } else {
+    blogsWithQuery = blogs;
+  }
+
+  res.status(200).json({
+    status: "success",
+    blogsWithQuery,
   });
 });
