@@ -50,9 +50,9 @@ To run this project, you will need to add the following environment variables to
   GET /api/blog-search?query=${string}
 ```
 
-| Parameter | Type     | Description                       |
-| :-------- | :------- | :-------------------------------- |
-| `string`  | `string` | Query for searching in the titles |
+| Parameter | Type     | Description                    |
+| :-------- | :------- | :----------------------------- |
+| `string`  | `string` | Query for searching the titles |
 
 ## Documentation
 
